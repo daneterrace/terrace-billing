@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --color-brand: #1a472a;
+  --color-brand-light: #2d6a4f;
+  --color-brand-muted: #e8f5ee;
+  --color-accent: #f4a227;
+  --color-accent-muted: #fef3dc;
+  --sidebar-width: 256px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: #f7f6f3;
+  color: #1a1a18;
+}
