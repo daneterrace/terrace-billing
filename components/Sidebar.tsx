@@ -45,6 +45,12 @@ const navSections = [
       { href: '/dashboard/gas', label: 'Gas', icon: Flame },
       { href: '/dashboard/water', label: 'Water', icon: Droplets },
     ]
+},
+  {
+    label: 'MAINTENANCE',
+    items: [
+      { href: '/dashboard/maintenance', label: 'Maintenance', icon: Wrench },
+    ]
   },
 ]
 
