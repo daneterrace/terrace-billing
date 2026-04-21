@@ -74,7 +74,7 @@ export default function DashboardPage() {
             const centreTenantsCount = tenants.filter((t) => t.centre_id === centre.id).length
             const activeCount = tenants.filter((t) => t.centre_id === centre.id && t.status === 'active').length
             return (
-              
+              <a
                 key={centre.id}
                 href={`/dashboard/centres/${centre.id}`}
                 className="block rounded-xl p-4 transition-all"
