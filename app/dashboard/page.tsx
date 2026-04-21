@@ -6,8 +6,8 @@ import { Building2, Users, FileText, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
-  const [centres, setCentres] = useState<any[]>([])
-  const [tenants, setTenants] = useState<any[]>([])
+  const [centres, setCentres] = useState<{id: string; name: string; is_active: boolean}[]>([])
+  const [tenants, setTenants] = useState<{id: string; status: string; centre_id: string}[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -80,8 +80,10 @@ export default function DashboardPage() {
                 className="block rounded-xl p-4 transition-all"
                 style={{ background: '#fff', border: '1px solid #ece9e3', textDecoration: 'none' }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-xs font-semibold"
-                  style={{ background: 'var(--color-brand-muted)', color: 'var(--color-brand)' }}>
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-xs font-semibold"
+                  style={{ background: 'var(--color-brand-muted)', color: 'var(--color-brand)' }}
+                >
                   {centre.name.charAt(0)}
                 </div>
                 <p className="text-sm font-medium" style={{ color: '#1a1a18' }}>{centre.name}</p>
