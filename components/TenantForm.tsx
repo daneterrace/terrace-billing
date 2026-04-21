@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Centre, Tenant, InternetPackage } from '@/lib/types'
@@ -8,22 +8,22 @@ import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 
 interface TenantFormProps {
-  centres: Centre[]
-  packages: InternetPackage[]
   tenant?: Tenant
   defaultCentreId?: string
 }
 
-export default function TenantForm({ centres, packages, tenant, defaultCentreId }: TenantFormProps) {
+export default function TenantForm({ tenant, defaultCentreId }: TenantFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const isEdit = !!tenant
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [centres, setCentres] = useState<Centre[]>([])
+  const [packages, setPackages] = useState<InternetPackage[]>([])
 
   const [form, setForm] = useState({
-    centre_id: tenant?.centre_id ?? defaultCentreId ?? centres[0]?.id ?? '',
+    centre_id: tenant?.centre_id ?? defaultCentreId ?? '',
     company_name: tenant?.company_name ?? '',
     contact_name: tenant?.contact_name ?? '',
     email: tenant?.email ?? '',
@@ -37,15 +37,49 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
     has_generator: tenant?.has_generator ?? false,
     has_water: tenant?.has_water ?? false,
     notes: tenant?.notes ?? '',
-    // Internet package
     internet_package_id: '',
     internet_custom_price: '',
     internet_router_fee: '',
     internet_installation_fee: '',
   })
 
+  useEffect(() => {
+    async function load() {
+      const [centresRes, packagesRes] = await Promise.all([
+        supabase.from('centres').select('*').eq('is_active', true).order('name'),
+        supabase.from('internet_packages').select('*').eq('is_active', true).order('name'),
+      ])
+      setCentres(centresRes.data ?? [])
+      setPackages(packagesRes.data ?? [])
+
+      if (!form.centre_id && centresRes.data?.[0]) {
+        setForm(f => ({ ...f, centre_id: centresRes.data![0].id }))
+      }
+
+      // Load existing internet subscription if editing
+      if (tenant?.id) {
+        const { data: sub } = await supabase
+          .from('tenant_internet')
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .maybeSingle()
+
+        if (sub) {
+          setForm(f => ({
+            ...f,
+            internet_package_id: sub.package_id ?? '',
+            internet_custom_price: sub.custom_sell_price?.toString() ?? '',
+            internet_router_fee: sub.router_fee?.toString() ?? '',
+            internet_installation_fee: sub.installation_fee?.toString() ?? '',
+          }))
+        }
+      }
+    }
+    load()
+  }, [])
+
   function set(key: string, val: string | boolean) {
-    setForm((f) => ({ ...f, [key]: val }))
+    setForm(f => ({ ...f, [key]: val }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -91,9 +125,10 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
           router_fee: parseFloat(form.internet_router_fee || '0'),
           installation_fee: parseFloat(form.internet_installation_fee || '0'),
         }
-        await supabase
+        const { error: ie } = await supabase
           .from('tenant_internet')
           .upsert(internetPayload, { onConflict: 'tenant_id' })
+        if (ie) throw ie
       }
 
       router.push(tenantId ? `/dashboard/tenants/${tenantId}` : `/dashboard/centres/${form.centre_id}`)
@@ -136,6 +171,7 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
               style={inputStyle}
               required
             >
+              <option value="">Select centre...</option>
               {centres.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -259,7 +295,6 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
         {/* Utilities */}
         <section className="rounded-xl p-6 space-y-4" style={{ background: '#fff', border: '1px solid #ece9e3' }}>
           <h2 className="text-sm font-medium" style={{ color: '#888', letterSpacing: '0.05em' }}>UTILITIES</h2>
-
           {[
             { key: 'has_internet', label: 'Internet', desc: 'Dande Mutande WiFi service' },
             { key: 'has_generator', label: 'Generator', desc: 'Metered kWh usage' },
@@ -271,7 +306,7 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
                 type="checkbox"
                 checked={form[key as keyof typeof form] as boolean}
                 onChange={(e) => set(key, e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded accent-green-800"
+                className="mt-0.5 w-4 h-4"
               />
               <div>
                 <p className="text-sm font-medium" style={{ color: '#1a1a18' }}>{label}</p>
@@ -281,11 +316,10 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
           ))}
         </section>
 
-        {/* Internet package (shown when has_internet) */}
+        {/* Internet package */}
         {form.has_internet && (
           <section className="rounded-xl p-6 space-y-4" style={{ background: '#eaf4fd', border: '1px solid #bde0f5' }}>
             <h2 className="text-sm font-medium" style={{ color: '#1a5276', letterSpacing: '0.05em' }}>INTERNET PACKAGE</h2>
-
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Package</label>
               <select
@@ -297,27 +331,26 @@ export default function TenantForm({ centres, packages, tenant, defaultCentreId 
                 <option value="">Select package…</option>
                 {packages.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {p.speed_mbps}Mbps — ${p.sell_price}/mo
+                    {p.name}{p.speed_mbps ? ` — ${p.speed_mbps}Mbps` : ''} — Cost ${p.cost_price} / Sell ${p.sell_price}
                   </option>
                 ))}
-                <option value="custom">Custom price</option>
               </select>
             </div>
 
-            {form.internet_package_id === 'custom' && (
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Custom monthly price (USD)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.internet_custom_price}
-                  onChange={(e) => set('internet_custom_price', e.target.value)}
-                  placeholder="0.00"
-                  className={inputClass}
-                  style={inputStyle}
-                />
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>
+                Custom sell price (leave blank to use package default)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.internet_custom_price}
+                onChange={(e) => set('internet_custom_price', e.target.value)}
+                placeholder="0.00"
+                className={inputClass}
+                style={inputStyle}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
