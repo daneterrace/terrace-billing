@@ -111,8 +111,8 @@ export default function RentPage() {
         const lines = tenants.map(t => ({
           billing_period_id: periodId,
           tenant_id: t.tenant_id,
-          utility_type: 'management',
-          description: 'Monthly rent',
+          utility_type: 'rent',
+description: 'Monthly rent',
           cost_price: 0,
           sell_price: t.this_month_rent,
           quantity: 1,

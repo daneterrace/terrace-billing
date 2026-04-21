@@ -157,7 +157,7 @@ export default function OpsPage() {
         const lines = tenantsWithCalc.map(t => ({
           billing_period_id: periodId,
           tenant_id: t.tenant_id,
-          utility_type: 'management',
+          utility_type: 'ops',
           description: `Ops charges: ${expenseNames || 'Centre expenses'}`,
           cost_price: 0,
           sell_price: t.calculated_amount,
