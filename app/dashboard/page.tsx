@@ -2,98 +2,163 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Building2, Users, FileText, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import { Plus, Wifi, Zap, Flame } from 'lucide-react'
 
-export default function DashboardPage() {
-  const [centres, setCentres] = useState<{id: string; name: string; is_active: boolean}[]>([])
-  const [tenants, setTenants] = useState<{id: string; status: string; centre_id: string}[]>([])
+export default function TenantsPage() {
+  const [tenants, setTenants] = useState<any[]>([])
+  const [centres, setCentres] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [filterCentre, setFilterCentre] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const [c, t] = await Promise.all([
-        supabase.from('centres').select('*').eq('is_active', true),
-        supabase.from('tenants').select('id, status, centre_id'),
+      const [t, c] = await Promise.all([
+        supabase.from('tenants').select('*, centre:centres(id, name)').order('company_name'),
+        supabase.from('centres').select('id, name').eq('is_active', true).order('name'),
       ])
-      setCentres(c.data ?? [])
       setTenants(t.data ?? [])
+      setCentres(c.data ?? [])
       setLoading(false)
     }
     load()
   }, [])
 
-  const activeTenants = tenants.filter((t) => t.status === 'active')
-  const now = new Date()
-  const monthName = now.toLocaleString('default', { month: 'long' })
+  const filtered = tenants
+    .filter((t) => filterCentre ? t.centre_id === filterCentre : true)
+    .filter((t) => filterStatus ? t.status === filterStatus : true)
 
-  const stats = [
-    { label: 'Active centres', value: centres.length, icon: Building2, color: '#1a472a', bg: '#e8f5ee' },
-    { label: 'Total tenants', value: tenants.length, icon: Users, color: '#1a5276', bg: '#eaf4fd' },
-    { label: 'Active tenants', value: activeTenants.length, icon: TrendingUp, color: '#7d6608', bg: '#fef9e7' },
-    { label: 'Invoices this month', value: 0, icon: FileText, color: '#6c3483', bg: '#f5eef8' },
-  ]
+  const statusStyle = (status: string) => {
+    if (status === 'active') return { background: '#e8f5ee', color: '#1a472a' }
+    if (status === 'pending') return { background: '#fef3dc', color: '#7d5a00' }
+    return { background: '#f5f5f5', color: '#888' }
+  }
 
-  if (loading) return (
-    <div className="p-8">
-      <p style={{ color: '#888' }}>Loading...</p>
-    </div>
-  )
+  if (loading) return <div className="p-8"><p style={{ color: '#888' }}>Loading...</p></div>
 
   return (
     <div className="p-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-medium" style={{ color: '#1a1a18' }}>Overview</h1>
-        <p className="text-sm mt-1" style={{ color: '#888' }}>
-          {monthName} {now.getFullYear()} · Utility billing dashboard
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-medium" style={{ color: '#1a1a18' }}>Tenants</h1>
+          <p className="text-sm mt-1" style={{ color: '#888' }}>
+            {filtered.length} tenant{filtered.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <Link
+          href="/dashboard/tenants/new"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
+          style={{ background: 'var(--color-brand)' }}
+        >
+          <Plus size={15} />
+          Add tenant
+        </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-xl p-5" style={{ background: '#fff', border: '1px solid #ece9e3' }}>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ background: s.bg }}>
-              <s.icon size={18} style={{ color: s.color }} strokeWidth={1.75} />
-            </div>
-            <p className="text-2xl font-semibold" style={{ color: '#1a1a18' }}>{s.value}</p>
-            <p className="text-sm mt-0.5" style={{ color: '#888' }}>{s.label}</p>
-          </div>
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <button
+          onClick={() => { setFilterCentre(''); setFilterStatus('') }}
+          className="text-xs px-3 py-1.5 rounded-full transition-all"
+          style={
+            !filterCentre && !filterStatus
+              ? { background: 'var(--color-brand)', color: '#fff' }
+              : { background: '#fff', color: '#666', border: '1px solid #ece9e3' }
+          }
+        >
+          All
+        </button>
+        {['active', 'pending', 'inactive'].map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilterStatus(filterStatus === s ? '' : s)}
+            className="text-xs px-3 py-1.5 rounded-full capitalize transition-all"
+            style={
+              filterStatus === s
+                ? { background: 'var(--color-brand)', color: '#fff' }
+                : { background: '#fff', color: '#666', border: '1px solid #ece9e3' }
+            }
+          >
+            {s}
+          </button>
+        ))}
+        <div className="w-px h-4" style={{ background: '#ece9e3' }} />
+        {centres.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setFilterCentre(filterCentre === c.id ? '' : c.id)}
+            className="text-xs px-3 py-1.5 rounded-full transition-all"
+            style={
+              filterCentre === c.id
+                ? { background: 'var(--color-brand)', color: '#fff' }
+                : { background: '#fff', color: '#666', border: '1px solid #ece9e3' }
+            }
+          >
+            {c.name}
+          </button>
         ))}
       </div>
 
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-medium" style={{ color: '#1a1a18' }}>Your centres</h2>
-          <Link href="/dashboard/centres" className="text-sm" style={{ color: 'var(--color-brand-light)' }}>
-            View all →
-          </Link>
+      {/* Table */}
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #ece9e3', background: '#fff' }}>
+        <div
+          className="grid px-5 py-2.5 text-xs font-medium"
+          style={{
+            gridTemplateColumns: '1fr 160px 130px 90px 80px',
+            color: '#888',
+            background: '#fafaf8',
+            borderBottom: '1px solid #f0ede7',
+          }}
+        >
+          <span>Company</span>
+          <span>Centre</span>
+          <span>Contact</span>
+          <span>Utilities</span>
+          <span>Status</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {centres.map((centre) => {
-            const centreTenantsCount = tenants.filter((t) => t.centre_id === centre.id).length
-            const activeCount = tenants.filter((t) => t.centre_id === centre.id && t.status === 'active').length
-            return (
-              <a
-                key={centre.id}
-                href={`/dashboard/centres/${centre.id}`}
-                className="block rounded-xl p-4 transition-all"
-                style={{ background: '#fff', border: '1px solid #ece9e3', textDecoration: 'none' }}
+
+        {filtered.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm" style={{ color: '#aaa' }}>No tenants found.</p>
+          </div>
+        ) : (
+          filtered.map((tenant, i) => (
+            <Link
+              key={tenant.id}
+              href={`/dashboard/tenants/${tenant.id}`}
+              className="grid px-5 py-3.5 items-center transition-colors"
+              style={{
+                gridTemplateColumns: '1fr 160px 130px 90px 80px',
+                borderTop: i > 0 ? '1px solid #f0ede7' : 'none',
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#fafaf8')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div>
+                <p className="text-sm font-medium" style={{ color: '#1a1a18' }}>{tenant.company_name}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#aaa' }}>Unit {tenant.unit_number ?? '—'}</p>
+              </div>
+              <p className="text-sm" style={{ color: '#555' }}>
+                {tenant.centre?.name ?? '—'}
+              </p>
+              <p className="text-sm" style={{ color: '#555' }}>{tenant.contact_name ?? '—'}</p>
+              <div className="flex items-center gap-1.5">
+                {tenant.has_internet && <Wifi size={13} style={{ color: '#2980b9' }} />}
+                {tenant.has_generator && <Zap size={13} style={{ color: '#f39c12' }} />}
+                {tenant.has_gas && <Flame size={13} style={{ color: '#e74c3c' }} />}
+              </div>
+              <span
+                className="text-xs font-medium px-2.5 py-1 rounded-full"
+                style={statusStyle(tenant.status)}
               >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 text-xs font-semibold"
-                  style={{ background: 'var(--color-brand-muted)', color: 'var(--color-brand)' }}
-                >
-                  {centre.name.charAt(0)}
-                </div>
-                <p className="text-sm font-medium" style={{ color: '#1a1a18' }}>{centre.name}</p>
-                <p className="text-xs mt-1" style={{ color: '#888' }}>
-                  {activeCount} active · {centreTenantsCount} total
-                </p>
-              </a>
-            )
-          })}
-        </div>
+                {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
+              </span>
+            </Link>
+          ))
+        )}
       </div>
     </div>
   )
