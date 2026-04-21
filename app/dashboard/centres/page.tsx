@@ -6,10 +6,13 @@ import { Building2, ChevronRight, Plus } from 'lucide-react'
 export default async function CentresPage() {
   const supabase = await createClient()
 
-  const { data: centres } = await supabase
+  const { data: centres, error } = await supabase
     .from('centres')
     .select('*')
     .order('name')
+
+  console.log('CENTRES DATA:', JSON.stringify(centres))
+  console.log('CENTRES ERROR:', JSON.stringify(error))
 
   const { data: tenants } = await supabase
     .from('tenants')
