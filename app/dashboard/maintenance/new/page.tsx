@@ -32,7 +32,9 @@ export default function NewMaintenanceJobPage() {
       ])
       setCentres(centresRes.data ?? [])
       setProfiles(profilesRes.data ?? [])
-      if (centresRes.data?.[0]) setForm(f => ({ ...f, centre_id: centresRes.data![0].id }))
+      if (centresRes.data?.[0]) {
+        setForm(f => ({ ...f, centre_id: centresRes.data![0].id }))
+      }
     }
     load()
   }, [])
@@ -41,19 +43,19 @@ export default function NewMaintenanceJobPage() {
     setForm(f => ({ ...f, [key]: val }))
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
     if (!form.title || !form.centre_id) {
       setError('Please fill in title and centre')
       return
     }
     setSaving(true)
     setError(null)
-    const supabase = createClient()
 
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { data, error: e } = await supabase
+    const { data: jobData, error: jobError } = await supabase
       .from('maintenance_jobs')
       .insert({
         centre_id: form.centre_id,
@@ -69,10 +71,14 @@ export default function NewMaintenanceJobPage() {
       .select()
       .single()
 
-    if (e) { setError(e.message); setSaving(false); return }
+    if (jobError) {
+      setError(jobError.message)
+      setSaving(false)
+      return
+    }
 
     // Send email notification if assigned
-    if (form.assigned_to && data) {
+    if (form.assigned_to && jobData) {
       const assignee = profiles.find(p => p.id === form.assigned_to)
       const centre = centres.find(c => c.id === form.centre_id)
       await fetch('/api/maintenance-notify', {
@@ -80,14 +86,14 @@ export default function NewMaintenanceJobPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'job_assigned',
-          job: { ...data, title: form.title },
+          job: { ...jobData, title: form.title },
           assignee,
           centre,
         }),
-      }).catch(() => {}) // Don't fail if email fails
+      }).catch(() => {})
     }
 
-    router.push(`/dashboard/maintenance/${data.id}`)
+    router.push(`/dashboard/maintenance/${jobData.id}`)
   }
 
   const inputClass = "w-full px-3.5 py-2.5 rounded-lg text-sm outline-none"
@@ -109,7 +115,7 @@ export default function NewMaintenanceJobPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Centre *</label>
-            <select value={form.centre_id} onChange={(e) => set('centre_id', e.target.value)}
+            <select value={form.centre_id} onChange={(ev) => set('centre_id', ev.target.value)}
               className={inputClass} style={inputStyle} required>
               {centres.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -118,7 +124,7 @@ export default function NewMaintenanceJobPage() {
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Job title *</label>
             <input type="text" value={form.title}
-              onChange={(e) => set('title', e.target.value)}
+              onChange={(ev) => set('title', ev.target.value)}
               placeholder="e.g. Broken light in parking area"
               className={inputClass} style={inputStyle} required />
           </div>
@@ -126,7 +132,7 @@ export default function NewMaintenanceJobPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Category</label>
-              <select value={form.category} onChange={(e) => set('category', e.target.value)}
+              <select value={form.category} onChange={(ev) => set('category', ev.target.value)}
                 className={inputClass} style={inputStyle}>
                 {['general','electrical','plumbing','structural','cleaning','security','equipment'].map(c => (
                   <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
@@ -136,7 +142,7 @@ export default function NewMaintenanceJobPage() {
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Location in centre</label>
               <input type="text" value={form.location_in_centre}
-                onChange={(e) => set('location_in_centre', e.target.value)}
+                onChange={(ev) => set('location_in_centre', ev.target.value)}
                 placeholder="e.g. North parking, Shop 12"
                 className={inputClass} style={inputStyle} />
             </div>
@@ -145,7 +151,7 @@ export default function NewMaintenanceJobPage() {
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Description</label>
             <textarea value={form.description}
-              onChange={(e) => set('description', e.target.value)}
+              onChange={(ev) => set('description', ev.target.value)}
               rows={3} placeholder="Describe the issue in detail..."
               className={inputClass} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
@@ -158,7 +164,7 @@ export default function NewMaintenanceJobPage() {
             <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>
               Assign to (optional — they will be notified by email)
             </label>
-            <select value={form.assigned_to} onChange={(e) => set('assigned_to', e.target.value)}
+            <select value={form.assigned_to} onChange={(ev) => set('assigned_to', ev.target.value)}
               className={inputClass} style={inputStyle}>
               <option value="">Unassigned</option>
               {profiles.map(p => (
@@ -172,14 +178,15 @@ export default function NewMaintenanceJobPage() {
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: '#444' }}>Notes</label>
             <textarea value={form.notes}
-              onChange={(e) => set('notes', e.target.value)}
+              onChange={(ev) => set('notes', ev.target.value)}
               rows={2} placeholder="Any additional notes..."
               className={inputClass} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </section>
 
         {error && (
-          <p className="text-sm px-4 py-3 rounded-lg" style={{ background: '#fff0f0', color: '#c0392b', border: '1px solid #fcc' }}>
+          <p className="text-sm px-4 py-3 rounded-lg"
+            style={{ background: '#fff0f0', color: '#c0392b', border: '1px solid #fcc' }}>
             {error}
           </p>
         )}
