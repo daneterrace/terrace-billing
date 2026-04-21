@@ -30,7 +30,7 @@ type TenantBill = {
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const UTILITY_LABELS: Record<string, string> = {
   internet: 'Internet', generator: 'Generator', gas: 'Gas',
-  water: 'Water', management: 'Rent / Ops'
+  water: 'Water', management: 'Management', rent: 'Rent', ops: 'Ops charges'
 }
 
 export default function BillingPage() {

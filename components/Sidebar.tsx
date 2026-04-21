@@ -48,6 +48,13 @@ const navSections = [
   },
 ]
 
+{
+  label: 'MAINTENANCE',
+  items: [
+    { href: '/dashboard/maintenance', label: 'Maintenance', icon: Wrench },
+  ]
+},
+
 const bottomItems = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
