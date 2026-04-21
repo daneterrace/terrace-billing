@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Building2, ChevronRight, Plus } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function CentresPage() {
   const supabase = await createClient()
 
