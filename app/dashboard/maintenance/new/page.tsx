@@ -28,7 +28,12 @@ export default function NewMaintenanceJobPage() {
       const supabase = createClient()
       const [centresRes, profilesRes] = await Promise.all([
         supabase.from('centres').select('id, name').eq('is_active', true).order('name'),
-        supabase.from('profiles').select('id, full_name, role').order('full_name'),
+        supabase
+          .from('profiles')
+          .select('id, full_name, role')
+          // Only show centre_manager and finance — roles that can be assigned jobs
+          .in('role', ['centre_manager', 'finance'])
+          .order('full_name'),
       ])
       setCentres(centresRes.data ?? [])
       setProfiles(profilesRes.data ?? [])
@@ -167,12 +172,21 @@ export default function NewMaintenanceJobPage() {
             <select value={form.assigned_to} onChange={(ev) => set('assigned_to', ev.target.value)}
               className={inputClass} style={inputStyle}>
               <option value="">Unassigned</option>
-              {profiles.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name} ({p.role.replace('_', ' ')})
-                </option>
-              ))}
+              {profiles.length === 0 ? (
+                <option disabled value="">No staff profiles found</option>
+              ) : (
+                profiles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.role.replace('_', ' ')})
+                  </option>
+                ))
+              )}
             </select>
+            {profiles.length === 0 && (
+              <p className="text-xs mt-1.5" style={{ color: '#e67e22' }}>
+                No centre managers or finance staff found. Add staff profiles in Supabase to enable assignment.
+              </p>
+            )}
           </div>
 
           <div>
