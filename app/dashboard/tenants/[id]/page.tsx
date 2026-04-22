@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Wifi, Zap, Flame, Pencil } from 'lucide-react'
 import TenantStatusBadge from '@/components/TenantStatusBadge'
+import TenantContracts from '@/components/TenantContracts'
 
 export default async function TenantPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -68,7 +69,7 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
       </div>
 
       <div className="grid grid-cols-3 gap-5">
-        {/* Left col: contact + lease */}
+        {/* Left col: contact + lease + contracts */}
         <div className="col-span-1 space-y-4">
           <div className="rounded-xl p-5" style={{ background: '#fff', border: '1px solid #ece9e3' }}>
             <p className="text-xs font-medium mb-3" style={{ color: '#888', letterSpacing: '0.05em' }}>CONTACT</p>
@@ -122,6 +123,9 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
           </div>
+
+          {/* Contracts — client component handles upload/download/delete */}
+          <TenantContracts tenantId={id} />
         </div>
 
         {/* Right col: utilities */}
