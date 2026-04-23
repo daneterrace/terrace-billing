@@ -19,8 +19,8 @@ type MaintenanceJob = {
   status: string
   category: string
   created_at: string
-  centre: { name: string } | null
-  assigned_to_profile: { full_name: string } | null
+  centre: any
+  assigned_to_profile: any
 }
 
 type Tenant = {
@@ -28,7 +28,7 @@ type Tenant = {
   company_name: string
   lease_end: string | null
   unit_number: string | null
-  centre: { name: string } | null
+  centre: any
 }
 
 type InternetStat = {
