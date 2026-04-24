@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Pencil, Trash2, Save, X, Wifi, Building2, FileText } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save, X, Wifi, Building2, FileText, LayoutDashboard } from 'lucide-react'
 import DashboardSettingsTab from '@/components/DashboardSettingsTab'
 
 type Package = {
@@ -32,7 +32,7 @@ type Centre = {
   tax_rate: number | null
 }
 
-type Tab = 'packages' | 'centres' | 'billing'
+type Tab = 'packages' | 'centres' | 'billing' | 'dashboard'
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>('packages')
@@ -591,6 +591,7 @@ export default function SettingsPage() {
           ))}
         </div>
       )}
+      {tab === 'dashboard' && <DashboardSettingsTab />}
     </div>
   )
 }
