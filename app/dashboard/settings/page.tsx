@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Pencil, Trash2, Save, X, Wifi, Building2, FileText } from 'lucide-react'
+import DashboardSettingsTab from '@/components/DashboardSettingsTab'
 
 type Package = {
   id: string
@@ -190,6 +191,7 @@ export default function SettingsPage() {
           { key: 'packages', label: 'Internet packages', icon: Wifi },
           { key: 'centres', label: 'Centres', icon: Building2 },
           { key: 'billing', label: 'Billing details', icon: FileText },
+          { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         ] as { key: Tab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setTab(key)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all"
@@ -397,7 +399,7 @@ export default function SettingsPage() {
       )}
 
       {/* ── BILLING DETAILS TAB ── */}
-      {tab === 'billing' && (
+      {tab === 'dashboard' && <DashboardSettingsTab />}(
         <div className="space-y-4">
           <p className="text-sm" style={{ color: '#888' }}>
             Set up billing details for each centre. These appear on invoices sent to tenants.
