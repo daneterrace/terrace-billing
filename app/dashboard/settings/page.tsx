@@ -187,23 +187,23 @@ export default function SettingsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: '#f0ede7' }}>
-        {([
-          { key: 'packages', label: 'Internet packages', icon: Wifi },
-          { key: 'centres', label: 'Centres', icon: Building2 },
-          { key: 'billing', label: 'Billing details', icon: FileText },
-          { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        ] as { key: Tab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all"
-            style={tab === key
-              ? { background: '#fff', color: '#1a1a18', fontWeight: 500 }
-              : { background: 'transparent', color: '#888' }
-            }>
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
+  {([
+    { key: 'packages', label: 'Internet packages', icon: Wifi },
+    { key: 'centres', label: 'Centres', icon: Building2 },
+    { key: 'billing', label: 'Billing details', icon: FileText },
+    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  ] as { key: Tab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
+    <button key={key} onClick={() => setTab(key)}
+      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all"
+      style={tab === key
+        ? { background: '#fff', color: '#1a1a18', fontWeight: 500 }
+        : { background: 'transparent', color: '#888' }
+      }>
+      <Icon size={14} />
+      {label}
+    </button>
+  ))}
+</div>
 
       {/* Messages */}
       {error && (
@@ -399,7 +399,7 @@ export default function SettingsPage() {
       )}
 
       {/* ── BILLING DETAILS TAB ── */}
-      {tab === 'dashboard' && <DashboardSettingsTab />}(
+      {tab === 'billing' && (
         <div className="space-y-4">
           <p className="text-sm" style={{ color: '#888' }}>
             Set up billing details for each centre. These appear on invoices sent to tenants.
